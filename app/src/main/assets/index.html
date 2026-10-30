@@ -1,0 +1,187 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SLIME JUMP</title>
+<style>
+* { box-sizing:border-box; }
+body {
+ margin:0;
+ background:#101b19;
+ color:white;
+ font-family:Arial,sans-serif;
+ overflow:hidden;
+ touch-action:none;
+}
+#game {
+ display:block;
+ width:100vw;
+ height:100dvh;
+ image-rendering:pixelated;
+}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+const W=360,H=640;
+canvas.width=W;
+canvas.height=H;
+
+let state="menu";
+let score=0;
+let best=Number(localStorage.getItem("slimeBest")||0);
+let speed=3;
+let frame=0;
+let obstacles=[];
+let player={x:65,y:480,w:30,h:28,vy:0,ground:true};
+let ground=510;
+
+function rect(x,y,w,h,color){
+ ctx.fillStyle=color;
+ ctx.fillRect(Math.round(x),Math.round(y),w,h);
+}
+
+function background(){
+ rect(0,0,W,H,"#8bd6a0");
+ rect(0,350,W,160,"#65b879");
+ for(let i=0;i<7;i++){
+  let x=(i*75-frame*0.3)%430;
+  rect(x,220,42,150,"#367d50");
+  rect(x-20,210,80,70,"#286644");
+  rect(x-10,185,60,50,"#347c4d");
+ }
+ rect(0,ground,W,H-ground,"#5b994b");
+ rect(0,ground,W,9,"#a2ce65");
+ for(let i=0;i<20;i++){
+  let x=(i*25-frame*speed)%380;
+  rect(x,ground+25,12,5,"#477d3d");
+ }
+}
+
+function slime(){
+ let x=player.x,y=player.y;
+ rect(x+5,y,20,5,"#a6ff75");
+ rect(x,y+5,30,17,"#70df55");
+ rect(x+5,y+22,20,6,"#54b83f");
+ rect(x+7,y+9,4,6,"#183d35");
+ rect(x+19,y+9,4,6,"#183d35");
+ rect(x+5,y+5,5,4,"#c6ff9b");
+}
+
+function spawn(){
+ obstacles.push({x:W+10,w:28,h:40+Math.random()*25});
+}
+
+function start(){
+ state="play";
+ score=0;
+ speed=3;
+ frame=0;
+ obstacles=[];
+ player.y=ground-player.h;
+ player.vy=0;
+ player.ground=true;
+}
+
+function jump(){
+ if(state==="menu"||state==="over"){
+  start();
+  return;
+ }
+ if(player.ground){
+  player.vy=-11;
+  player.ground=false;
+ }
+}
+
+function update(){
+ if(state!=="play")return;
+ frame++;
+ score++;
+ speed=3+Math.min(score/1500,3);
+
+ player.vy+=0.48;
+ player.y+=player.vy;
+
+ if(player.y+player.h>=ground){
+  player.y=ground-player.h;
+  player.vy=0;
+  player.ground=true;
+ }
+
+ if(frame%90===0)spawn();
+
+ obstacles.forEach(o=>o.x-=speed);
+ obstacles=obstacles.filter(o=>o.x+o.w>0);
+
+ for(let o of obstacles){
+  if(player.x+player.w>o.x+3 &&
+     player.x<o.x+o.w-3 &&
+     player.y+player.h>ground-o.h){
+    state="over";
+    best=Math.max(best,Math.floor(score/10));
+    localStorage.setItem("slimeBest",best);
+  }
+ }
+}
+
+function draw(){
+ background();
+ if(state==="play"||state==="over")slime();
+
+ for(let o of obstacles){
+  rect(o.x,ground-o.h,o.w,o.h,"#65432f");
+  rect(o.x-5,ground-o.h,o.w+10,12,"#367e3d");
+  rect(o.x+5,ground-o.h+12,5,8,"#9b704b");
+ }
+
+ ctx.fillStyle="#173d2c";
+ ctx.textAlign="center";
+
+ if(state==="menu"){
+  ctx.font="bold 36px Arial";
+  ctx.fillText("SLIME JUMP",180,150);
+  ctx.font="18px Arial";
+  ctx.fillText("PIXEL FOREST",180,185);
+  ctx.font="20px Arial";
+  ctx.fillText("НАЖМИ ДЛЯ ИГРЫ",180,400);
+  ctx.font="14px Arial";
+  ctx.fillText("Прыгай через препятствия!",180,435);
+ }
+
+ if(state==="play"){
+  ctx.font="bold 24px Arial";
+  ctx.fillText("SCORE: "+Math.floor(score/10),180,55);
+ }
+
+ if(state==="over"){
+  rect(35,230,290,155,"#183c30");
+  ctx.fillStyle="white";
+  ctx.font="bold 30px Arial";
+  ctx.fillText("GAME OVER",180,280);
+  ctx.font="19px Arial";
+  ctx.fillText("Счёт: "+Math.floor(score/10),180,320);
+  ctx.fillText("Рекорд: "+best,180,350);
+  ctx.font="14px Arial";
+  ctx.fillText("НАЖМИ ДЛЯ ПОВТОРА",180,370);
+ }
+}
+
+function loop(){
+ update();
+ draw();
+ requestAnimationFrame(loop);
+}
+
+canvas.addEventListener("pointerdown",jump);
+loop();
+</script>
+</body>
+  </html>
+  
