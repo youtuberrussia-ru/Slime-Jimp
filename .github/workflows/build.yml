@@ -18,7 +18,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: " 17 "
 
       - name: Check project files
         run: |
@@ -27,7 +27,7 @@ jobs:
 
       - name: Build APK
         run: |
-          chmod +x gradlew
+          chmod +x /gradlew
           ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
