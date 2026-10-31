@@ -18,22 +18,19 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: " 17 "
+          java-version: 17
 
-      - name: Check project files
-        run: |
-          ls -la
-          ls -la app
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
 
       - name: Build APK
-        run: |
-          chmod +x /gradlew
-          ./gradlew assembleDebug --stacktrace
+        run: gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Slime-Jump-APK
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
+          name: SLIME-JUMP-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
           
